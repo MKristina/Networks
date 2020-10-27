@@ -3,7 +3,8 @@ import java.net.Socket;
 
 public class Client {
     private Socket socket;
-
+    private FileInputStream inputFile;
+    
     public Client(String addr,int port)throws IOException {
         socket = new Socket(addr,port);
     }
@@ -39,6 +40,14 @@ public class Client {
             loadFile(fileName,dataOutputStream);
         } catch(Exception e){
             System.out.println(e);
+        } finally {
+            try {
+                dataOutputStream.flush();
+                inputFile.close();
+                dataOutputStream.close();
+                bufferedReader.close();
+                socket.close();
+            } catch (Exception e) {}
         }
     }
     public static void main(String[] args) throws Exception {
