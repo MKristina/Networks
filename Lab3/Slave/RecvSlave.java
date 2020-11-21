@@ -40,10 +40,10 @@ public class RecvSlave implements Runnable {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-
+    public void stop() {
+        socket.close();
+    }
 
 }

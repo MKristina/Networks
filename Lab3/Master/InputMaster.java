@@ -9,7 +9,7 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class InputMaster implements Runnable {
+public class InputMaster  {
     Scanner inputReader;
     TreeNode node;
 
@@ -18,7 +18,6 @@ public class InputMaster implements Runnable {
         inputReader = new Scanner(System.in);
     }
 
-    @Override
     public void run() {
         ConcurrentLinkedQueue<InetSocketAddress> children = node.getChildren();
         ConcurrentLinkedQueue<Packet> packetsToSend = node.getPacketsToSend();
@@ -35,7 +34,8 @@ public class InputMaster implements Runnable {
                 packetsToSend.add(new Packet(node.getParent(),msg,Packet.CHAT_MESSAGE_TTL));
             }
         }
-
-
+    }
+    public void stop() {
+        inputReader.close();
     }
 }

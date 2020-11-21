@@ -63,8 +63,9 @@ public class SendSlave implements Runnable {
         oos.writeObject(message);
         DatagramPacket packet = new DatagramPacket(baos.toByteArray(), baos.toByteArray().length, addPort);
         socket.send(packet);
-
     }
+
+    public void stop() { socket.close(); }
 }
 
 

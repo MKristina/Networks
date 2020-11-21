@@ -143,4 +143,5 @@ public class TreeNode {
         return alterNode != null;
     }
 
+    public void stop() { socket.close(); }
 }
