@@ -37,7 +37,7 @@ public class SendSlave implements Runnable {
             try {
                 Packet packet = packetsToSend.poll();
                 if (packet != null) {
-                    if (packet.getMessage().getMessageType() != MessageType.PING_MESSAGE) {
+                    if ((packet.getMessage().getMessageType() != MessageType.PING_MESSAGE) && (packet.getMessage().getMessageType() != MessageType.CONFIRM_FOSTER_MESSAGE)) {
                         packet.decTtl();
                         SavedPacketsToSend.add(packet);
                     }
@@ -45,7 +45,7 @@ public class SendSlave implements Runnable {
                        System.out.println("type: " + packet.getMessage().getMessageType());
                        System.out.println("ttl: " + packet.getTtl());
                        System.out.println("send: " + packet.getMessage().getMessageText() + " to " + packet.getInetSocketAddress().toString());
-                   }
+                    }
                     sendMessage(packet.getMessage(), packet.getInetSocketAddress());
                 }
 
