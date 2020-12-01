@@ -5,6 +5,7 @@ import Main.Packet;
 import Main.TreeNode;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class RecvMaster implements Runnable {
@@ -24,54 +25,59 @@ public class RecvMaster implements Runnable {
                 if (packet.getMessage().getMessageType() != MessageType.PING_MESSAGE) {
                     System.out.println(packet.getMessage().getName()+": " + packet.getMessage().getMessageText() + "////" + packet.getInetSocketAddress().toString());
                 }
+                if (!node.getChildren().contains(packet.getInetSocketAddress())) {
+                    node.addChild(packet.getInetSocketAddress());
+                    if (!node.hasAlterNode()) {
+                        node.setAlterNode(packet.getInetSocketAddress());
+                        int port;
+                        if(node.hasParent()) {
+                            port = node.getParent().getPort();
+                        }
+                        else port = node.getSocket().getLocalPort();
+                        var magicFoster = new InetSocketAddress("127.0.0.1",port);
+
+                        Packet.answerToPacket(packet,MessageType.SEND_FOSTER_MESSAGE,magicFoster.toString() ,packetsToSend,Packet.SEND_FOSTER_TTL,node.getName());
+                        Packet.spreadPacket(packet, packetsToSend, Packet.SEND_FOSTER_TTL,node,true);
+                        System.out.println("i got alter node" + packet.getInetSocketAddress().toString());
+                    } else {
+                        Packet.answerToPacket(packet,MessageType.SEND_FOSTER_MESSAGE,node.getAlterNode().toString(),packetsToSend,Packet.SEND_FOSTER_TTL, node.getName());
+                    }
+                }
                 switch (packet.getMessage().getMessageType()) {
                     case ACCEPT_CHILD_MESSAGE : {
                         node.setParent(packet.getInetSocketAddress());
                         SavedPacketsToSend.removeIf(item -> item.getMessage().getGUID().equals(packet.getMessage().getGUID()));
-                        System.out.println("I'm got parent now! it's :" + node.getParent().toString());
-                    }
-                    case ADOPT_CHILD_MESSAGE : {
-                        node.addChild(packet.getInetSocketAddress());
-                        Packet.answerToPacket(packet, MessageType.ACCEPT_CHILD_MESSAGE, "I  accept you", packetsToSend, Packet.ACCEPT_CHILD_TTL,node.getName());
-                        if (!node.hasAlterNode()) {
-                            node.setAlterNode(packet.getInetSocketAddress());
-                            int port;
-                            if(node.hasParent()) {
-                                port = node.getParent().getPort();
-                            }
-                            else port = node.getSocket().getLocalPort();
-                            var magicFoster = new InetSocketAddress("127.0.0.1",port);
-
-                            Packet.answerToPacket(packet,MessageType.SEND_FOSTER_MESSAGE,magicFoster.toString() ,packetsToSend,Packet.SEND_FOSTER_TTL,node.getName());
-                            Packet.spreadPacket(packet, packetsToSend, Packet.SEND_FOSTER_TTL,node,true);
-                            System.out.println("i got alter node" + packet.getInetSocketAddress().toString());
-                        } else {
-                            Packet.answerToPacket(packet,MessageType.SEND_FOSTER_MESSAGE,node.getAlterNode().toString(),packetsToSend,Packet.SEND_FOSTER_TTL, node.getName());
-                        }
-                        System.out.println("I send alter node to my children" + node.getAlterNode());
+                        //System.out.println("I'm got parent now! it's :" + node.getParent().toString());
                     }
                     case CHAT_MESSAGE : {
                         Packet.answerToPacket(packet, MessageType.ACCEPT_CHAT_MESSAGE, "I"+" accept message from you", packetsToSend, Packet.ACCEPT_CHAT_MESSAGE_TTL, node.getName());
                         Packet.spreadPacket(packet, packetsToSend, Packet.CHAT_MESSAGE_TTL,node, false);
+                        System.out.println(packet.getMessage().getName()+": "+packet.getMessage().getMessageText());
                     }
                     case ACCEPT_CHAT_MESSAGE : {
                         SavedPacketsToSend.removeIf(item -> item.getMessage().getGUID().equals(packet.getMessage().getGUID()));
-                        System.out.println(packet.getInetSocketAddress().toString() + "//" + packet.getMessage().getName() + " got my message");
+                        //System.out.println(packet.getInetSocketAddress().toString() + "//" + packet.getMessage().getName() + " got my message");
                     }
                     case PING_MESSAGE : {
                         node.updateRelatives(packet.getInetSocketAddress());
                     }
                     case SEND_FOSTER_MESSAGE : {
                         Packet.answerToPacket(packet,MessageType.CONFIRM_FOSTER_MESSAGE,"got foster",packetsToSend,Packet.CONFIRM_FOSTER_TTL,node.getName());
+                        //System.out.println(packet.getMessage().getMessageText());
                         String[] data = packet.getMessage().getMessageText().split(":");
                         data[0] = data[0].substring(1);
-                        InetSocketAddress fosterAddr = new InetSocketAddress(data[0], Integer.parseInt(data[1]));
-                        node.setFosterParent(fosterAddr);
-                        System.out.println("i got a foster: " + fosterAddr.toString());
+                        //System.out.println("[DEBUG] DATA = "+Arrays.toString(data));
+                        //data[0] = packet.getMessage().getMessageText()
+                        if (data[0].length() > 7) {
+                            InetSocketAddress fosterAddr = new InetSocketAddress(data[0], Integer.parseInt(data[1]));
+                            node.setFosterParent(fosterAddr);
+                            //System.out.println("i got a foster: " + fosterAddr.toString());
+                        }
 
                     }
                     case CONFIRM_FOSTER_MESSAGE : {
-                        SavedPacketsToSend.removeIf(item -> item.getMessage().getGUID().equals(packet.getMessage().getGUID()));
+                        //Packet.answerToPacket(packet,MessageType.CONFIRM_FOSTER_MESSAGE,"got foster",packetsToSend,Packet.CONFIRM_FOSTER_TTL,node.getName());
+                        SavedPacketsToSend.remove(packet);
                     }
                 }
 
