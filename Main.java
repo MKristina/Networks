@@ -1,12 +1,14 @@
+
 public class Main
 {
     public static void main(String[] args)
     {
+        Proxy proxy = new Proxy(ArgResolver.resolve(args));
         try
         {
-            Proxy proxy = new Proxy(ArgResolver.resolve(args));
             proxy.start();
         } catch (IllegalArgumentException exc) {
+            proxy.stop();
             System.out.println("Usage: " + ArgResolver.getUsage());
         }
     }

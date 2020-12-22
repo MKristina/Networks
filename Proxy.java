@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.*;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.Set;
 
 public class Proxy
@@ -17,13 +18,16 @@ public class Proxy
     {
         this.proxyPort = proxyPort;
     }
-
+    Selector selector;
+    DatagramChannel datagramSocket;
+    ServerSocketChannel serverSocketChannel;
     public void start()
     {
-        try(Selector selector = Selector.open();
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open())
+        try
         {
-            DatagramChannel datagramSocket = DatagramChannel.open();
+             selector = Selector.open();
+             serverSocketChannel = ServerSocketChannel.open();
+             datagramSocket = DatagramChannel.open();
             datagramSocket.configureBlocking(false);
 
             DnsService dnsService = DnsService.getInstance();
@@ -47,8 +51,16 @@ public class Proxy
 
     private void select(Selector selector) throws IOException
     {
+        Scanner in = new Scanner(System.in);
         while (true)
         {
+            if(in.nextLine()!=""){
+                in.close();
+                datagramSocket.close();
+                datagramSocket.close();
+                selector.close();
+                break;
+            }
             selector.select();
             Set<SelectionKey> readyKeys = selector.selectedKeys();
             Iterator<SelectionKey> iterator = readyKeys.iterator();
@@ -99,6 +111,15 @@ public class Proxy
         if (selectionKey.isValid() && selectionKey.readyOps() != SelectionKey.OP_WRITE)
         {
             handler.handle(selectionKey);
+        }
+    }
+    public void stop(){
+        try{
+        datagramSocket.close();
+        datagramSocket.close();
+        selector.close();
+    } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
